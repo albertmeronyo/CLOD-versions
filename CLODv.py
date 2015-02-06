@@ -26,7 +26,7 @@ class CLODv:
         '''
         for root, dirs, files in os.walk(self.PATH):
             for f in combinations(files, 2):
-                self.parsePair(f)
+                self.parsePair(root + f)
 
     def parsePair(self, p):
         '''
