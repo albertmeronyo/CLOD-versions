@@ -43,7 +43,7 @@ class CLODv:
         '''
         total = 0
         for line in f:
-            total += line[1]
+            total += int(line[1])
         self.log.info("File %s sums total %s" % (f, total))
 
         
