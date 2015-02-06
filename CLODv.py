@@ -26,14 +26,14 @@ class CLODv:
         '''
         for root, dirs, files in os.walk(self.PATH):
             for f in combinations(files, 2):
-                self.parsePair(os.path.join(root, f))
+                self.parsePair(os.path.join(root, f[0]), os.path.join(root, f[1]))
 
-    def parsePair(self, p):
+    def parsePair(self, fA, fB):
         '''
         Parses a pair of files in the stats dir
         '''
-        currFileA = list(csv.reader(open(p[0], 'rb'), delimiter='\t'))
-        currFileB = list(csv.reader(open(p[1], 'rb'), delimiter='\t'))
+        currFileA = list(csv.reader(open(fA, 'rb'), delimiter='\t'))
+        currFileB = list(csv.reader(open(fB, 'rb'), delimiter='\t'))
         currTotalA = self.sumTotal(currFileA)
         currTotalB = self.sumTotal(currFileB)
 
