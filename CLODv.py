@@ -7,18 +7,26 @@ import rdflib
 import os
 import logging
 import csv
+import distance
+import json
 from itertools import combinations
 from ConfigParser import SafeConfigParser
 
 CONFIG_INI = "config.ini"
 
 class CLODv:
+    versions = {}
+
     def __init__(self, __config):
         self.log = logging.getLogger("CLODv")
         self.config = __config
         self.PATH = self.config.get('general', 'path')
-        
+
+        self.log.info("Parsing doc combinations...")
         self.parseFiles()
+
+        self.log.info("Serializing...")
+        self.serializeVersions()
 
     def parseFiles(self):
         '''
@@ -34,9 +42,40 @@ class CLODv:
         '''
         currFileA = list(csv.reader(open(fA, 'rb'), delimiter='\t'))
         currFileB = list(csv.reader(open(fB, 'rb'), delimiter='\t'))
-        currTotalA = self.sumTotal(currFileA)
-        currTotalB = self.sumTotal(currFileB)
+        if self.areVersions(currFileA, currFileB):
+            self.addVersion(fA, fB)
+            self.addVersion(fB, fA)
 
+    def addVersion(self, a, b):
+        '''
+        Adds file b as a version of a
+        '''
+        if a not in self.versions:
+            self.versions[a] = []
+        self.versions[a].append(b)
+
+    def areVersions(self, a, b):
+        '''
+        Decides if a and b are versions of each other
+        '''
+        return self.similarNamespaces(a, b) and self.similarFrequencies(a, b)
+
+    def similarNamespaces(self, a, b):
+        '''
+        Decides if a and b have similar namespaces
+        '''
+        nsA = [line[0] for line in a]
+        nsB = [line[0] for line in b]
+        return distance.jaccard(nsA, nsB) >= self.config.get('similarity', 'ns')
+
+    def similarFrequences(self, a, b):
+        '''
+        Decides if a and b have similar namespace frequency
+        '''
+        freqA = [line[1] for line in a]
+        freqB = [line[1] for line in b]
+        return distance.jaccard(freqA, freqB) >= self.config.get('similarity', 'freq')
+        
     def sumTotal(self, f):
         '''
         Sums the total freqs of stats file f
@@ -44,8 +83,14 @@ class CLODv:
         total = 0
         for line in f:
             total += int(line[1])
-        self.log.info("File %s sums total %s" % (f, total))
+        return total
 
+    def serializeVersions(self):
+        '''
+        Serializes versions in a json file
+        '''
+        with open(self.config.get('general', 'dump'), 'wb') as fp:
+            json.dump(self.versions, fp)
         
 if __name__ == "__main__":
     # Config
